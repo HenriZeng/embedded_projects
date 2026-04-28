@@ -1,15 +1,8 @@
-# Build output
 Debug/
 Release/
 build/
-
-# STM32CubeIDE / Eclipse
 .metadata/
-
-# OS files
 .DS_Store
-
-# Temporary files
 *.log
 *.tmp
 *.bak
