@@ -10,6 +10,36 @@ STM32 embedded learning projects based on STM32 Nucleo-F103RB.
 - IDE: STM32CubeIDE
 - Configuration Tool: STM32CubeMX
 
+## New Project Workflow
+
+New STM32 projects in this workspace are created from an external template repository instead of copying an existing project manually.
+
+- Template repository: `/Users/henri/git/stm32-template-f103rb-base`
+- Project creation script: `/Users/henri/STM32CubeIDE/workspace_2.1.1/new_stm32_project.sh`
+
+### Create a New Project
+
+```bash
+./new_stm32_project.sh motor_driver
+```
+
+The script will:
+
+- Copy the template repository into this workspace
+- Create a new project folder using the target project name
+- Remove the copied `.git` directory to avoid nested Git repositories
+- Rename `stm32_template.ioc` to the new project name
+- Update project name references in `README.md` and `RENAME_PROJECT.md`
+
+### After Running the Script
+
+You still need to:
+
+1. Open the new `.ioc` file in STM32CubeIDE or STM32CubeMX
+2. Confirm the `Project Name` matches the new project name
+3. Regenerate STM32CubeIDE project files
+4. Build and verify the project
+
 ## Projects
 
 ### 1. led_blink
