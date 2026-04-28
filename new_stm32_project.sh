@@ -20,7 +20,7 @@ This script will:
      ${TEMPLATE_REPO}
   2. Create a new project under:
      ${WORKSPACE_DIR}/<new_project_name>
-  3. Remove the copied .git directory
+  3. Remove copied Git-related files from the new project
   4. Rename ${TEMPLATE_IOC_NAME} to <new_project_name>.ioc
   5. Replace template project name references in the new .ioc and README.md
 EOF
@@ -54,6 +54,7 @@ fi
 
 cp -R "${TEMPLATE_REPO}" "${TARGET_DIR}"
 rm -rf "${TARGET_DIR}/.git"
+rm -f "${TARGET_DIR}/.gitignore"
 
 mv "${TARGET_DIR}/${TEMPLATE_IOC_NAME}" "${TARGET_IOC_PATH}"
 
@@ -76,6 +77,7 @@ Project created:
 Updated:
   - folder name
   - ${NEW_IOC_NAME}
+  - removed copied .git and .gitignore
   - README.md project name references
   - RENAME_PROJECT.md project name references
 

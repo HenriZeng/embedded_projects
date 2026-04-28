@@ -27,7 +27,7 @@ The script will:
 
 - Copy the template repository into this workspace
 - Create a new project folder using the target project name
-- Remove the copied `.git` directory to avoid nested Git repositories
+- Remove copied Git-related files such as `.git` and `.gitignore`
 - Rename `stm32_template.ioc` to the new project name
 - Update project name references in `README.md` and `RENAME_PROJECT.md`
 
