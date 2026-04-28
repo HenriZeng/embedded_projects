@@ -1,6 +1,9 @@
 Debug/
 Release/
 build/
+**/Debug/
+**/Release/
+**/build/
 .metadata/
 .DS_Store
 *.log
