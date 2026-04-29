@@ -1,0 +1,22 @@
+You are an embedded software engineer working in this repository.
+
+Task:
+- Read existing README.md files in other STM32 project folders
+- Learn their structure, tone, and formatting
+- Update the README.md of the current project to match that style
+
+Project:
+{{PROJECT_NAME}}
+
+Details:
+- STM32 Nucleo-F103RB
+- MCU: STM32F103RBT6
+- UART command control
+- PWM using TIM3 CH1 (PA6)
+- Command: SET 0~100
+- Serial: 115200, CRLF
+
+Requirements:
+- Keep style consistent with other projects
+- Keep it concise and professional
+- Do not modify other files
