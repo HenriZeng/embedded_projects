@@ -1,5 +1,7 @@
 # STM32 ADC DMA CLI OLED System
 
+**Version: v1.1**
+
 ## 1. Project Title
 STM32 ADC DMA CLI OLED System
 
@@ -107,7 +109,16 @@ The firmware treats both carriage return (`\r`) and line feed (`\n`) as command 
 - Lower CPU overhead due to DMA-managed data transfer
 - Suitable foundation for data acquisition systems, sensor dashboards, or diagnostic tools
 
-## 10. Possible Extensions
+## 10. Changelog
+
+### v1.1
+- Added mode display on OLED showing current state (STREAM / STOP)
+- Improved READ command behavior for single-shot acquisition
+- Added READ highlight indicator when triggered during STREAM mode
+- Enhanced state management for clearer system behavior
+- Better visual feedback for user interactions
+
+## 11. Possible Extensions
 - Add multi-channel ADC support with channel selection commands
 - Implement graphical waveform plotting on OLED
 - Add data logging to external storage or UART output
