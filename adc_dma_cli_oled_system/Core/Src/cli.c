@@ -8,6 +8,10 @@ static char rx_buf[64];
 static uint8_t rx_index = 0;
 
 uint8_t streaming = 0;
+uint8_t display_update_request = 1;
+volatile SystemMode system_mode = MODE_STOP;
+volatile uint8_t read_once = 1;
+volatile uint32_t read_flash_until = 0;
 
 static void send_str(const char *s)
 {
@@ -26,19 +30,27 @@ static void str_to_upper(char *str)
 
 static void cmd_read(void)
 {
-    streaming = 0;
+    read_once = 1;
+
+    if (system_mode == MODE_STREAM)
+    {
+        read_flash_until = HAL_GetTick() + 1000;  // 显示 READ 约 1 秒
+    }
+
     send_str("READ ONCE\r\n");
 }
 
 static void cmd_stream(void)
 {
-    streaming = 1;
+    system_mode = MODE_STREAM;
+    read_once = 1;
     send_str("STREAM ON\r\n");
 }
 
 static void cmd_stop(void)
 {
-    streaming = 0;
+    system_mode = MODE_STOP;
+    read_once = 1;
     send_str("STREAM OFF\r\n");
 }
 

@@ -140,29 +140,59 @@ int main(void)
 	      old_pos = new_pos;
 	  }
 
-	  if (streaming)
-	  {
-	      uint32_t raw = ADC_ReadRaw();
-	      uint32_t mv = raw * 3300 / 4095;
+	  SSD1306_SetCursor(0, 32);
+	  SSD1306_WriteString("MODE:STOP");
 
-	      char line1[20];
-	      char line2[20];
+      uint32_t raw = ADC_ReadRaw();
+      uint32_t mv = raw * 3300 / 4095;
 
-	      sprintf(line1, "ADC:%lu", raw);
-	      sprintf(line2, "V:%lumV", mv);
+      char line1[20];
+      char line2[20];
+      char line3[20];
 
-	      SSD1306_Clear();
+      sprintf(line1, "ADC:%lu", raw);
+      sprintf(line2, "V:%lumV", mv);
 
-	      SSD1306_SetCursor(0, 0);
-	      SSD1306_WriteString(line1);
+      if (system_mode == MODE_STREAM || read_once)
+      {
+          uint32_t raw = ADC_ReadRaw();
+          uint32_t mv = raw * 3300 / 4095;
 
-	      SSD1306_SetCursor(0, 16);
-	      SSD1306_WriteString(line2);
+          char line1[20];
+          char line2[20];
 
-	      SSD1306_UpdateScreen();
+          sprintf(line1, "ADC:%lu", raw);
+          sprintf(line2, "V:%lumV", mv);
 
-	      HAL_Delay(200);
-	  }
+          SSD1306_Clear();
+
+          SSD1306_SetCursor(0, 0);
+          SSD1306_WriteString(line1);
+
+          SSD1306_SetCursor(0, 16);
+          SSD1306_WriteString(line2);
+
+          SSD1306_SetCursor(0, 32);
+
+          if (HAL_GetTick() < read_flash_until)
+          {
+              SSD1306_WriteString("READ      ");
+          }
+          else if (system_mode == MODE_STREAM)
+          {
+              SSD1306_WriteString("MODE:STREAM");
+          }
+          else
+          {
+              SSD1306_WriteString("MODE:STOP  ");
+          }
+
+          SSD1306_UpdateScreen();
+
+          read_once = 0;
+
+          HAL_Delay(200);
+      }
     /* USER CODE BEGIN 3 */
     /* Place application loop code here. */
   /* USER CODE END 3 */

@@ -123,6 +123,13 @@ static const uint8_t* get_char_bitmap(char c)
     static const uint8_t n7[5] = {0x01,0x71,0x09,0x05,0x03};
     static const uint8_t n8[5] = {0x36,0x49,0x49,0x49,0x36};
     static const uint8_t n9[5] = {0x06,0x49,0x49,0x29,0x1E};
+    static const uint8_t E[5] = {0x7F,0x49,0x49,0x49,0x41};
+    static const uint8_t M[5] = {0x7F,0x02,0x0C,0x02,0x7F};
+    static const uint8_t O[5] = {0x3E,0x41,0x41,0x41,0x3E};
+    static const uint8_t P[5] = {0x7F,0x09,0x09,0x09,0x06};
+    static const uint8_t R[5] = {0x7F,0x09,0x19,0x29,0x46};
+    static const uint8_t S[5] = {0x46,0x49,0x49,0x49,0x31};
+    static const uint8_t T[5] = {0x01,0x01,0x7F,0x01,0x01};
 
     switch (c)
     {
@@ -142,6 +149,13 @@ static const uint8_t* get_char_bitmap(char c)
         case '7': return n7;
         case '8': return n8;
         case '9': return n9;
+        case 'E': return E;
+        case 'M': return M;
+        case 'O': return O;
+        case 'P': return P;
+        case 'R': return R;
+        case 'S': return S;
+        case 'T': return T;
         default: return space;
     }
 }
