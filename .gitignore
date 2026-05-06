@@ -1,11 +1,60 @@
+# Build output directories
 Debug/
 Release/
 build/
 **/Debug/
 **/Release/
 **/build/
+
+# Compiled files
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+*.o
+*.d
+*.su
+
+# IDE metadata
 .metadata/
+.recommenders/
+
+# IDE settings (optional - uncomment if you want to ignore)
+# .settings/
+# *.launch
+
+# macOS specific
 .DS_Store
+.osx.project
+
+# Windows specific
+Thumbs.db
+Desktop.ini
+
+# Temporary files
 *.log
 *.tmp
 *.bak
+*.swp
+*~
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+
+# STM32CubeIDE specific
+.settings/language.settings.xml
+
+# Optional: Ignore launch configurations (debugging settings)
+# *.launch
