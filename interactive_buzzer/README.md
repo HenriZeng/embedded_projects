@@ -1,5 +1,8 @@
 # STM32 Interactive Buzzer
 
+
+**Version: V1.0**
+
 ## 1. Project Title
 STM32 Interactive Buzzer
 

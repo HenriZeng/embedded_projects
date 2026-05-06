@@ -1,5 +1,8 @@
 # STM32 LED Blink Demo
 
+
+**Version: V1.0**
+
 ## 1. Project Title
 STM32 LED Blink Demo
 

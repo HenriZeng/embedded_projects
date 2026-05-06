@@ -1,5 +1,8 @@
 # STM32 UART DMA CLI
 
+
+**Version: V1.0**
+
 ## 1. Project Title
 STM32 UART DMA CLI
 

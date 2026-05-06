@@ -1,5 +1,8 @@
 # STM32 ADC CLI Monitor
 
+
+**Version: V1.0**
+
 ## 1. Project Title
 STM32 ADC CLI Monitor
 
