@@ -20,9 +20,9 @@ build/
 .metadata/
 .recommenders/
 
-# IDE settings (optional - uncomment if you want to ignore)
-# .settings/
-# *.launch
+# IDE settings
+.settings/
+*.launch
 
 # macOS specific
 .DS_Store
@@ -55,6 +55,3 @@ x86/
 
 # STM32CubeIDE specific
 .settings/language.settings.xml
-
-# Optional: Ignore launch configurations (debugging settings)
-# *.launch
