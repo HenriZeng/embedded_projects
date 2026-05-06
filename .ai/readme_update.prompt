@@ -3,20 +3,18 @@ You are an embedded software engineer working in this repository.
 Task:
 - Read existing README.md files in other STM32 project folders
 - Learn their structure, tone, and formatting
-- Update the README.md of the current project to match that style
+- Inspect the current project's .ioc and source files to identify its actual peripherals, pins, UART protocol, and behavior
+- Update the README.md of the current project to match that style and describe the actual project
 
 Project:
 {{PROJECT_NAME}}
 
-Details:
+Baseline:
 - STM32 Nucleo-F103RB
 - MCU: STM32F103RBT6
-- UART command control
-- PWM using TIM3 CH1 (PA6)
-- Command: SET 0~100
-- Serial: 115200, CRLF
 
 Requirements:
 - Keep style consistent with other projects
 - Keep it concise and professional
+- Do not invent features that are not present in the project files
 - Do not modify other files

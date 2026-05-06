@@ -3,9 +3,14 @@ set -e
 
 export PATH="$HOME/.npm-global/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
-if ! command -v codex >/dev/null 2>&1; then
-  echo "Error: codex command not found. Install it with: npm install -g @openai/codex"
-  exit 1
+CODEX_BIN="codex"
+if ! command -v "$CODEX_BIN" >/dev/null 2>&1; then
+  if [ -x "$HOME/.npm-global/lib/node_modules/@openai/codex/bin/codex.js" ]; then
+    CODEX_BIN="$HOME/.npm-global/lib/node_modules/@openai/codex/bin/codex.js"
+  else
+    echo "Error: codex command not found. Install it with: npm install -g @openai/codex"
+    exit 1
+  fi
 fi
 
 PROJECT_NAME="$1"
@@ -24,7 +29,7 @@ PROMPT=$(sed "s/{{PROJECT_NAME}}/$PROJECT_NAME/g" .ai/readme_update.prompt)
 
 echo "Running Codex..."
 
-codex exec \
+"$CODEX_BIN" exec \
   --sandbox workspace-write \
   "$PROMPT"
 
