@@ -22,7 +22,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -32,6 +31,11 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define SERVO_CONTROL_PERIOD_MS 2U
+#define SERVO_SCAN_DEBOUNCE_MS  250U
+#define ADC_FILTER_SHIFT        3U
+#define SERVO_ADC_DEADBAND      12U
+#define SERVO_PULSE_DEADBAND_US 8U
 
 /* USER CODE END PD */
 
@@ -45,8 +49,6 @@ ADC_HandleTypeDef hadc1;
 
 TIM_HandleTypeDef htim3;
 
-UART_HandleTypeDef huart2;
-
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -54,26 +56,16 @@ UART_HandleTypeDef huart2;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_USART2_UART_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
+static uint8_t Is_User_Button_Pressed(void);
+static void Run_Servo_ManualScanMode(void);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-/**
-  * @brief  Redirect printf to UART2
-  * @param  ch: Character to send
-  * @retval Character sent
-  */
-int __io_putchar(int ch)
-{
-    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
-    return ch;
-}
 
 /**
   * @brief  Read ADC value from potentiometer
@@ -87,7 +79,7 @@ uint32_t Read_ADC_Value(void)
     HAL_ADC_Start(&hadc1);
     
     // Wait for conversion to complete
-    if (HAL_ADC_PollForConversion(&hadc1, 100) == HAL_OK)
+    if (HAL_ADC_PollForConversion(&hadc1, 5) == HAL_OK)
     {
         // Read ADC value
         adc_value = HAL_ADC_GetValue(&hadc1);
@@ -97,6 +89,20 @@ uint32_t Read_ADC_Value(void)
     HAL_ADC_Stop(&hadc1);
     
     return adc_value;
+}
+
+static uint32_t Apply_ADC_Filter(uint32_t raw_adc, uint32_t *state)
+{
+    if (*state == 0U)
+    {
+        *state = raw_adc << ADC_FILTER_SHIFT;
+    }
+    else
+    {
+        *state = *state - (*state >> ADC_FILTER_SHIFT) + raw_adc;
+    }
+
+    return (*state >> ADC_FILTER_SHIFT);
 }
 
 /**
@@ -125,12 +131,12 @@ uint32_t ADC_To_Angle(uint32_t adc)
   * @retval PWM pulse value for TIM3 CCR
   * 
   * @note   SG90 Servo timing:
-  *         - 0°   = 500us  pulse
+  *         - 0°   = 500us pulse
   *         - 90°  = 1500us pulse
   *         - 180° = 2500us pulse
   *         
   *         TIM3 Configuration:
-  *         - Prescaler = 71 (72MHz / 72 = 1MHz timer clock)
+  *         - Prescaler = 7 (8MHz / 8 = 1MHz timer clock)
   *         - Period = 19999 (20ms PWM period for 50Hz)
   *         - 1 tick = 1us
   *         
@@ -153,6 +159,51 @@ uint32_t Servo_Angle_To_Pulse(uint32_t angle)
     
     // Return CCR value (1 tick = 1us)
     return pulse_us;
+}
+
+static uint8_t Is_User_Button_Pressed(void)
+{
+    return (HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin) == GPIO_PIN_RESET) ? 1U : 0U;
+}
+
+static void Run_Servo_ManualScanMode(void)
+{
+    static const uint32_t scan_pulses[] = {700, 800, 900, 1100, 1300, 1500, 1700, 1900, 2100, 2200, 2300};
+    uint32_t index = 0;
+    uint32_t pulse = scan_pulses[index];
+
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulse);
+
+    while (Is_User_Button_Pressed() != 0U)
+    {
+        HAL_Delay(10);
+    }
+
+    while (1)
+    {
+        if (Is_User_Button_Pressed() != 0U)
+        {
+            HAL_Delay(20);
+            if (Is_User_Button_Pressed() != 0U)
+            {
+                index++;
+                if (index >= (sizeof(scan_pulses) / sizeof(scan_pulses[0])))
+                {
+                    index = 0;
+                }
+
+                pulse = scan_pulses[index];
+                __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulse);
+
+                while (Is_User_Button_Pressed() != 0U)
+                {
+                    HAL_Delay(10);
+                }
+
+                HAL_Delay(SERVO_SCAN_DEBOUNCE_MS);
+            }
+        }
+    }
 }
 
 /* USER CODE END 0 */
@@ -186,64 +237,76 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART2_UART_Init();
   MX_ADC1_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   /* Application initialization */
-  
-  // Print startup message
-  printf("\r\n");
-  printf("========================================\r\n");
-  printf("  Smart Servo Console V1.0\r\n");
-  printf("  SG90 Servo Control System\r\n");
-  printf("========================================\r\n");
-  printf("Initializing...\r\n");
-  
-  // Start PWM output for servo control
+
+  /* Start PWM and move the servo to center position. */
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-  printf("[OK] PWM started on TIM3 CH1 (PA6)\r\n");
-  
-  // Set servo to center position (90 degrees)
   uint32_t center_pulse = Servo_Angle_To_Pulse(90);
   __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, center_pulse);
-  printf("[OK] Servo initialized to 90 degrees\r\n");
-  
-  printf("System ready!\r\n");
-  printf("========================================\r\n");
-  printf("Format: ADC:xxxx ANGLE:xxx PULSE:xxxx\r\n");
-  printf("========================================\r\n\r\n");
-  
-  HAL_Delay(1000);
+
+  if (Is_User_Button_Pressed() != 0U)
+  {
+    Run_Servo_ManualScanMode();
+  }
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint32_t adc_value = 0;
+  uint32_t raw_adc_value = 0;
+  uint32_t angle = 90;
+  uint32_t pulse = center_pulse;
+  uint32_t filtered_adc_accum = 0;
+  uint32_t servo_adc_value = 0;
+  uint32_t last_servo_adc_value = 0;
+  uint32_t last_servo_pulse = center_pulse;
+  uint32_t last_control_tick = HAL_GetTick();
+
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    
-    // Step 1: Read ADC value from potentiometer
-    uint32_t adc_value = Read_ADC_Value();
-    
-    // Step 2: Convert ADC to servo angle (0-180 degrees)
-    uint32_t angle = ADC_To_Angle(adc_value);
-    
-    // Step 3: Convert angle to PWM pulse width
-    uint32_t pulse = Servo_Angle_To_Pulse(angle);
-    
-    // Step 4: Update PWM compare value to control servo
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulse);
-    
-    // Step 5: Print debug information via UART
-    printf("ADC:%4lu ANGLE:%3lu PULSE:%4lu\r\n", adc_value, angle, pulse);
-    
-    // Control loop delay (100ms = 10Hz update rate)
-    HAL_Delay(100);
-    
+    uint32_t now = HAL_GetTick();
+
+    if ((now - last_control_tick) >= SERVO_CONTROL_PERIOD_MS)
+    {
+      last_control_tick = now;
+
+      // Step 1: Read ADC value from potentiometer
+      raw_adc_value = Read_ADC_Value();
+      adc_value = Apply_ADC_Filter(raw_adc_value, &filtered_adc_accum);
+
+      // Step 2: Ignore small ADC jitter before updating servo target.
+      servo_adc_value = adc_value;
+      if (last_servo_adc_value == 0U)
+      {
+        last_servo_adc_value = servo_adc_value;
+      }
+
+      if (((servo_adc_value > last_servo_adc_value) ? (servo_adc_value - last_servo_adc_value)
+                                                    : (last_servo_adc_value - servo_adc_value)) >= SERVO_ADC_DEADBAND)
+      {
+        last_servo_adc_value = servo_adc_value;
+      }
+
+      angle = ADC_To_Angle(last_servo_adc_value);
+
+      // Step 3: Convert angle to PWM pulse width
+      pulse = Servo_Angle_To_Pulse(angle);
+
+      // Step 4: Ignore tiny pulse changes so the servo does not hunt in place.
+      if (((pulse > last_servo_pulse) ? (pulse - last_servo_pulse)
+                                      : (last_servo_pulse - pulse)) >= SERVO_PULSE_DEADBAND_US)
+      {
+        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulse);
+        last_servo_pulse = pulse;
+      }
+    }
   /* USER CODE END 3 */
   }
 }
@@ -357,7 +420,7 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 71;
+  htim3.Init.Prescaler = 7;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim3.Init.Period = 19999;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -388,39 +451,6 @@ static void MX_TIM3_Init(void)
 }
 
 /**
-  * @brief USART2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART2_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART2_Init 0 */
-
-  /* USER CODE END USART2_Init 0 */
-
-  /* USER CODE BEGIN USART2_Init 1 */
-
-  /* USER CODE END USART2_Init 1 */
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART2_Init 2 */
-
-  /* USER CODE END USART2_Init 2 */
-
-}
-
-/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -434,6 +464,7 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
@@ -444,6 +475,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : USER_Btn_Pin */
+  GPIO_InitStruct.Pin = USER_Btn_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(USER_Btn_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
